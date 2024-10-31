@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.14.0](https://github.com/terraform-aws-modules/terraform-aws-vpc/compare/v5.13.0...v5.14.0) (2024-10-18)
+
+
+### Features
+
+* Add outputs for the full list of subnets created and their attributes ([#1116](https://github.com/terraform-aws-modules/terraform-aws-vpc/issues/1116)) ([e212245](https://github.com/terraform-aws-modules/terraform-aws-vpc/commit/e2122450fa816fb844e987485f2b8804606576dd))
+
+
+### Bug Fixes
+
+* Update CI workflow versions to latest ([#1125](https://github.com/terraform-aws-modules/terraform-aws-vpc/issues/1125)) ([b1f2125](https://github.com/terraform-aws-modules/terraform-aws-vpc/commit/b1f2125bf1015bfc3900feda290ade8bd0a7b871))
+
+## [5.13.0](https://github.com/terraform-aws-modules/terraform-aws-vpc/compare/v5.12.1...v5.13.0) (2024-08-16)
+
+
+### Features
+
+* Add support for `ip_address_type` for VPC endpoint ([#1096](https://github.com/terraform-aws-modules/terraform-aws-vpc/issues/1096)) ([d868303](https://github.com/terraform-aws-modules/terraform-aws-vpc/commit/d868303bd78b8c56cf76e2495672d42b256a1387))
+
 ## [5.12.1](https://github.com/terraform-aws-modules/terraform-aws-vpc/compare/v5.12.0...v5.12.1) (2024-08-09)
 
 
