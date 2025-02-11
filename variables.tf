@@ -372,6 +372,12 @@ variable "private_subnet_suffix" {
   default     = "private"
 }
 
+variable "create_private_nat_gateway_route" {
+  description = "Controls if a nat gateway route should be created to give internet access to the private subnets"
+  type        = bool
+  default     = true
+}
+
 variable "private_subnet_tags" {
   description = "Additional tags for the private subnets"
   type        = map(string)
@@ -1595,6 +1601,16 @@ variable "create_flow_log_cloudwatch_iam_role" {
   description = "Whether to create IAM role for VPC Flow Logs"
   type        = bool
   default     = false
+}
+
+variable "flow_log_cloudwatch_iam_role_conditions" {
+  description = "Additional conditions of the CloudWatch role assumption policy"
+  type = list(object({
+    test     = string
+    variable = string
+    values   = list(string)
+  }))
+  default = []
 }
 
 variable "flow_log_cloudwatch_iam_role_arn" {
