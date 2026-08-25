@@ -1507,11 +1507,18 @@ locals {
     ] : [],
   ])
 
-  default_network_acl_ingress = concat(
-    var.network_acl_restrict_admin_ports ? local.network_acl_restrict_admin_ports_ingress : [],
-    var.default_network_acl_ingress,
-    var.network_acl_additional_ingress,
-  )
+  # IPv6 rules are stripped when `enable_ipv6` is false
+  default_network_acl_ingress = [
+    for rule in concat(
+      var.network_acl_restrict_admin_ports ? local.network_acl_restrict_admin_ports_ingress : [],
+      var.default_network_acl_ingress,
+      var.network_acl_additional_ingress,
+    ) : rule if var.enable_ipv6 || try(rule.ipv6_cidr_block, null) == null
+  ]
+
+  default_network_acl_egress = [
+    for rule in var.default_network_acl_egress : rule if var.enable_ipv6 || try(rule.ipv6_cidr_block, null) == null
+  ]
 
   # The same built-in rules mapped to the `aws_network_acl_rule` schema so they are
   # also applied to any dedicated network ACLs (`*_dedicated_network_acl = true`)
@@ -1566,7 +1573,7 @@ resource "aws_default_network_acl" "this" {
     }
   }
   dynamic "egress" {
-    for_each = var.default_network_acl_egress
+    for_each = local.default_network_acl_egress
     content {
       action          = egress.value.action
       cidr_block      = lookup(egress.value, "cidr_block", null)
