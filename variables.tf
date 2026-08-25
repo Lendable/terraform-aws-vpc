@@ -1442,9 +1442,25 @@ variable "default_network_acl_ingress" {
 }
 
 variable "network_acl_restrict_admin_ports" {
-  description = "Should be true to add built-in rules to the Default Network ACL allowing SSH (22) and RDP (3389) only from private (RFC1918) and CGNAT (RFC6598) ranges and denying them from anywhere else. These rules use rule numbers 10-23 so they are evaluated before `default_network_acl_ingress` rules"
+  description = "Should be true to add built-in rules to the Default Network ACL and any dedicated network ACLs allowing SSH (22) and RDP (3389) only from private (RFC1918) and CGNAT (RFC6598) ranges and denying them from anywhere else. These rules use rule numbers 10-23 so they are evaluated before `default_network_acl_ingress` and `*_inbound_acl_rules` rules"
   type        = bool
   default     = true
+
+  validation {
+    condition = !var.network_acl_restrict_admin_ports || alltrue([
+      for rules in [
+        var.public_inbound_acl_rules,
+        var.private_inbound_acl_rules,
+        var.database_inbound_acl_rules,
+        var.redshift_inbound_acl_rules,
+        var.elasticache_inbound_acl_rules,
+        var.intra_inbound_acl_rules,
+        var.outpost_inbound_acl_rules,
+      ] :
+      length(rules) + 12 <= 20 && alltrue([for rule in rules : tonumber(rule.rule_number) >= 25])
+    ])
+    error_message = "When `network_acl_restrict_admin_ports` is enabled, each `*_inbound_acl_rules` list must use `rule_number` 25 or higher (rule numbers 10-23 are reserved for the built-in admin port rules) and may contain at most 8 rules so the combined count stays within the AWS quota of 20 rules per NACL per direction."
+  }
 }
 
 variable "network_acl_additional_ingress" {
