@@ -1451,6 +1451,27 @@ variable "network_acl_additional_ingress" {
   description = "List of maps of additional ingress rules to append to the Default Network ACL. Rule numbers must not collide with `default_network_acl_ingress` (100-101 by default) and must be 25 or higher when `network_acl_restrict_admin_ports` is enabled (rule numbers below 25 are reserved for the built-in rules). The combined number of ingress rules must not exceed the AWS quota of 20 rules per NACL per direction"
   type        = list(map(string))
   default     = []
+
+  validation {
+    condition     = !var.network_acl_restrict_admin_ports || alltrue([for rule in var.network_acl_additional_ingress : tonumber(rule.rule_no) >= 25])
+    error_message = "When `network_acl_restrict_admin_ports` is enabled, `network_acl_additional_ingress` rules must use `rule_no` 25 or higher - rule numbers below 25 are reserved for the built-in admin port rules."
+  }
+
+  # The built-in admin port rules (see `network_acl_restrict_admin_ports_ingress` in main.tf)
+  # occupy rule numbers 10-17 and 20-23, i.e. 12 rules
+  validation {
+    condition     = (var.network_acl_restrict_admin_ports ? 12 : 0) + length(var.default_network_acl_ingress) + length(var.network_acl_additional_ingress) <= 20
+    error_message = "The combined number of ingress rules on the Default Network ACL (built-in admin port rules + `default_network_acl_ingress` + `network_acl_additional_ingress`) exceeds the AWS quota of 20 rules per NACL per direction."
+  }
+
+  validation {
+    condition = length(distinct(concat(
+      var.network_acl_restrict_admin_ports ? concat(range(10, 18), range(20, 24)) : [],
+      [for rule in var.default_network_acl_ingress : tonumber(rule.rule_no)],
+      [for rule in var.network_acl_additional_ingress : tonumber(rule.rule_no)],
+    ))) == (var.network_acl_restrict_admin_ports ? 12 : 0) + length(var.default_network_acl_ingress) + length(var.network_acl_additional_ingress)
+    error_message = "Duplicate `rule_no` values found across the built-in admin port rules (10-23), `default_network_acl_ingress`, and `network_acl_additional_ingress` on the Default Network ACL."
+  }
 }
 
 variable "default_network_acl_egress" {
