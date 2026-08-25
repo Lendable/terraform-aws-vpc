@@ -1493,7 +1493,7 @@ locals {
         cidr_block = "0.0.0.0/0"
       }
     ],
-    # IPv6 denies are only needed when the VPC has an IPv6 CIDR.
+    # IPv6 denies are only needed when the VPC has an IPv6 enabled.
     # Rule numbers 22-23 stay reserved by the validations either way.
     var.enable_ipv6 ? [
       for port_idx, port in [22, 3389] : {
