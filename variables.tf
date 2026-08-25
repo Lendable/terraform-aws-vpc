@@ -1442,7 +1442,7 @@ variable "default_network_acl_ingress" {
 }
 
 variable "network_acl_restrict_admin_ports" {
-  description = "Set to true to add built-in rules to Network ACLs allowing SSH (22) and RDP (3389) only from private (RFC1918) and CGNAT (RFC6598) ranges. These rules use rule numbers 10-23 so they are evaluated before `default_network_acl_ingress` and `*_inbound_acl_rules` rules"
+  description = "Set to true to add built-in rules to Network ACLs allowing SSH (22) and RDP (3389) only from private (RFC1918) and CGNAT (RFC6598) ranges. These rules use rule numbers 10-23 so they are evaluated before `default_network_acl_ingress` and `*_inbound_acl_rules` rules. The IPv6 deny rules (22-23) are only added when `enable_ipv6` is true"
   type        = bool
   default     = true
 

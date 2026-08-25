@@ -1493,7 +1493,9 @@ locals {
         cidr_block = "0.0.0.0/0"
       }
     ],
-    [
+    # IPv6 denies are only needed when the VPC has an IPv6 CIDR. Rule numbers 22-23
+    # stay reserved by the validations either way
+    var.enable_ipv6 ? [
       for port_idx, port in [22, 3389] : {
         rule_no         = 22 + port_idx
         action          = "deny"
@@ -1502,7 +1504,7 @@ locals {
         protocol        = "tcp"
         ipv6_cidr_block = "::/0"
       }
-    ],
+    ] : [],
   ])
 
   default_network_acl_ingress = concat(
