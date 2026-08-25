@@ -1468,9 +1468,8 @@ resource "aws_default_security_group" "this" {
 ################################################################################
 
 locals {
-  # Built-in rules allowing SSH/RDP only from private (RFC1918) and CGNAT (RFC6598)
-  # ranges and denying them from anywhere else. Rule numbers 10-23 ensure these are
-  # evaluated before `default_network_acl_ingress` rules (100-101 by default)
+  # Built-in rules allowing SSH/RDP only from private (RFC1918) and CGNAT (RFC6598) ranges.
+  # Rule numbers 10-23 ensure these are evaluated before `default_network_acl_ingress` rules.
   network_acl_restrict_admin_ports_ingress = flatten([
     [
       for port_idx, port in [22, 3389] : [

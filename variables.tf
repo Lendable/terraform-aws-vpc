@@ -1444,7 +1444,7 @@ variable "default_network_acl_ingress" {
 variable "network_acl_restrict_admin_ports" {
   description = "Should be true to add built-in rules to the Default Network ACL allowing SSH (22) and RDP (3389) only from private (RFC1918) and CGNAT (RFC6598) ranges and denying them from anywhere else. These rules use rule numbers 10-23 so they are evaluated before `default_network_acl_ingress` rules"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "network_acl_additional_ingress" {
@@ -1457,11 +1457,10 @@ variable "network_acl_additional_ingress" {
     error_message = "When `network_acl_restrict_admin_ports` is enabled, `network_acl_additional_ingress` rules must use `rule_no` 25 or higher - rule numbers below 25 are reserved for the built-in admin port rules."
   }
 
-  # The built-in admin port rules (see `network_acl_restrict_admin_ports_ingress` in main.tf)
-  # occupy rule numbers 10-17 and 20-23, i.e. 12 rules
+  # Built-in admin port rules (see `network_acl_restrict_admin_ports_ingress` in main.tf) occupy rule numbers 10-17 and 20-23
   validation {
     condition     = (var.network_acl_restrict_admin_ports ? 12 : 0) + length(var.default_network_acl_ingress) + length(var.network_acl_additional_ingress) <= 20
-    error_message = "The combined number of ingress rules on the Default Network ACL (built-in admin port rules + `default_network_acl_ingress` + `network_acl_additional_ingress`) exceeds the AWS quota of 20 rules per NACL per direction."
+    error_message = "The combined number of ingress rules on the Network ACL exceeds the AWS quota of 20 rules per direction."
   }
 
   validation {
@@ -1470,7 +1469,7 @@ variable "network_acl_additional_ingress" {
       [for rule in var.default_network_acl_ingress : tonumber(rule.rule_no)],
       [for rule in var.network_acl_additional_ingress : tonumber(rule.rule_no)],
     ))) == (var.network_acl_restrict_admin_ports ? 12 : 0) + length(var.default_network_acl_ingress) + length(var.network_acl_additional_ingress)
-    error_message = "Duplicate `rule_no` values found across the built-in admin port rules (10-23), `default_network_acl_ingress`, and `network_acl_additional_ingress` on the Default Network ACL."
+    error_message = "Duplicate `rule_no` values found across the built-in admin port rules (10-23), `default_network_acl_ingress`, and `network_acl_additional_ingress` on the Network ACL."
   }
 }
 

@@ -235,7 +235,7 @@ module "wrapper" {
   nat_gateway_destination_cidr_block                          = try(each.value.nat_gateway_destination_cidr_block, var.defaults.nat_gateway_destination_cidr_block, "0.0.0.0/0")
   nat_gateway_tags                                            = try(each.value.nat_gateway_tags, var.defaults.nat_gateway_tags, {})
   network_acl_additional_ingress                              = try(each.value.network_acl_additional_ingress, var.defaults.network_acl_additional_ingress, [])
-  network_acl_restrict_admin_ports                            = try(each.value.network_acl_restrict_admin_ports, var.defaults.network_acl_restrict_admin_ports, false)
+  network_acl_restrict_admin_ports                            = try(each.value.network_acl_restrict_admin_ports, var.defaults.network_acl_restrict_admin_ports, true)
   one_nat_gateway_per_az                                      = try(each.value.one_nat_gateway_per_az, var.defaults.one_nat_gateway_per_az, false)
   outpost_acl_tags                                            = try(each.value.outpost_acl_tags, var.defaults.outpost_acl_tags, {})
   outpost_arn                                                 = try(each.value.outpost_arn, var.defaults.outpost_arn, null)
