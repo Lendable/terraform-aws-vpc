@@ -1467,6 +1467,52 @@ resource "aws_default_security_group" "this" {
 # Default Network ACLs
 ################################################################################
 
+locals {
+  # Built-in rules allowing SSH/RDP only from private (RFC1918) and CGNAT (RFC6598)
+  # ranges and denying them from anywhere else. Rule numbers 10-23 ensure these are
+  # evaluated before `default_network_acl_ingress` rules (100-101 by default)
+  network_acl_restrict_admin_ports_ingress = flatten([
+    [
+      for port_idx, port in [22, 3389] : [
+        for cidr_idx, cidr in ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10"] : {
+          rule_no    = 10 + port_idx * 4 + cidr_idx
+          action     = "allow"
+          from_port  = port
+          to_port    = port
+          protocol   = "tcp"
+          cidr_block = cidr
+        }
+      ]
+    ],
+    [
+      for port_idx, port in [22, 3389] : {
+        rule_no    = 20 + port_idx
+        action     = "deny"
+        from_port  = port
+        to_port    = port
+        protocol   = "tcp"
+        cidr_block = "0.0.0.0/0"
+      }
+    ],
+    [
+      for port_idx, port in [22, 3389] : {
+        rule_no         = 22 + port_idx
+        action          = "deny"
+        from_port       = port
+        to_port         = port
+        protocol        = "tcp"
+        ipv6_cidr_block = "::/0"
+      }
+    ],
+  ])
+
+  default_network_acl_ingress = concat(
+    var.network_acl_restrict_admin_ports ? local.network_acl_restrict_admin_ports_ingress : [],
+    var.default_network_acl_ingress,
+    var.network_acl_additional_ingress,
+  )
+}
+
 resource "aws_default_network_acl" "this" {
   count = local.create_vpc && var.manage_default_network_acl ? 1 : 0
 
@@ -1479,7 +1525,7 @@ resource "aws_default_network_acl" "this" {
   subnet_ids = null
 
   dynamic "ingress" {
-    for_each = var.default_network_acl_ingress
+    for_each = local.default_network_acl_ingress
     content {
       action          = ingress.value.action
       cidr_block      = lookup(ingress.value, "cidr_block", null)
@@ -1515,6 +1561,21 @@ resource "aws_default_network_acl" "this" {
 
   lifecycle {
     ignore_changes = [subnet_ids]
+
+    precondition {
+      condition     = length(local.default_network_acl_ingress) <= 20
+      error_message = "The combined number of ingress rules on the Default Network ACL (built-in admin port rules + `default_network_acl_ingress` + `network_acl_additional_ingress`) exceeds the AWS quota of 20 rules per NACL per direction."
+    }
+
+    precondition {
+      condition     = length(distinct([for rule in local.default_network_acl_ingress : tonumber(rule.rule_no)])) == length(local.default_network_acl_ingress)
+      error_message = "Duplicate `rule_no` values found across the built-in admin port rules (10-23), `default_network_acl_ingress`, and `network_acl_additional_ingress` on the Default Network ACL."
+    }
+
+    precondition {
+      condition     = !var.network_acl_restrict_admin_ports || alltrue([for rule in var.network_acl_additional_ingress : tonumber(rule.rule_no) >= 25])
+      error_message = "When `network_acl_restrict_admin_ports` is enabled, `network_acl_additional_ingress` rules must use `rule_no` 25 or higher - rule numbers below 25 are reserved for the built-in admin port rules."
+    }
   }
 }
 

@@ -1441,6 +1441,18 @@ variable "default_network_acl_ingress" {
   ]
 }
 
+variable "network_acl_restrict_admin_ports" {
+  description = "Should be true to add built-in rules to the Default Network ACL allowing SSH (22) and RDP (3389) only from private (RFC1918) and CGNAT (RFC6598) ranges and denying them from anywhere else. These rules use rule numbers 10-23 so they are evaluated before `default_network_acl_ingress` rules"
+  type        = bool
+  default     = false
+}
+
+variable "network_acl_additional_ingress" {
+  description = "List of maps of additional ingress rules to append to the Default Network ACL. Rule numbers must not collide with `default_network_acl_ingress` (100-101 by default) and must be 25 or higher when `network_acl_restrict_admin_ports` is enabled (rule numbers below 25 are reserved for the built-in rules). The combined number of ingress rules must not exceed the AWS quota of 20 rules per NACL per direction"
+  type        = list(map(string))
+  default     = []
+}
+
 variable "default_network_acl_egress" {
   description = "List of maps of egress rules to set on the Default Network ACL"
   type        = list(map(string))
